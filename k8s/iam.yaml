@@ -1,0 +1,94 @@
+# Illustrative template: supply image digest, HTTPS ingress, managed stores and secrets before applying.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: iam-config
+data:
+  IAM_ISSUER: https://identity.example.invalid
+  DB_URL: jdbc:postgresql://postgres.internal:5432/iam
+  DB_USER: iam
+  REDIS_HOST: redis.internal
+  SIGNING_KEY_FILE: /keys/signing.jwks
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iam
+spec:
+  replicas: 3
+  selector:
+    matchLabels: { app: iam }
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  template:
+    metadata:
+      labels: { app: iam }
+    spec:
+      terminationGracePeriodSeconds: 40
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: iam
+          image: enterprise-iam:replace-with-reviewed-digest
+          ports: [ { containerPort: 9000 } ]
+          envFrom:
+            - configMapRef: { name: iam-config }
+            - secretRef: { name: iam-runtime }
+          resources:
+            requests: { cpu: '1', memory: 1Gi }
+            limits: { cpu: '2', memory: 2Gi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ ALL ] }
+          startupProbe:
+            httpGet: { path: /actuator/health/liveness, port: 9000 }
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet: { path: /actuator/health/readiness, port: 9000 }
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /actuator/health/liveness, port: 9000 }
+            periodSeconds: 10
+          volumeMounts:
+            - { name: keys, mountPath: /keys, readOnly: true }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: keys
+          secret:
+            secretName: iam-signing
+            defaultMode: 288
+        - name: tmp
+          emptyDir: { sizeLimit: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: iam }
+spec:
+  selector: { app: iam }
+  ports: [ { port: 9000, targetPort: 9000 } ]
+---
+apiVrsion: policy/v1
+kind: PodDisruptionBudget
+metadata: { name: iam }
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels: { app: iam }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: iam }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: iam }
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 65 }

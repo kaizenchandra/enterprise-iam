@@ -1,0 +1,19 @@
+# Opt-in only: provide reviewed public trust/metadata/CRL files in the mounted directory.
+services:
+  iam:
+    environment:
+      PASSKEYS_ENABLED: "true"
+      PASSKEY_ATTESTATION_MODE: REQUIRED
+      PASSKEY_ATTESTATION_POLICY_REVISION: ${PASSKEY_ATTESTATION_POLICY_REVISION:?Set the monotonic policy revision}
+      PASSKEY_METADATA_FILE: /run/iam-attestation/metadata.jwt
+      PASSKEY_METADATA_SIGNING_ROOTS_FILE: /run/iam-attestation/metadata-roots.pem
+      PASSKEY_AUTHENTICATOR_ROOTS_FILE: /run/iam-attestation/authenticator-roots.pem
+      PASSKEY_METADATA_CRLS_FILE: /run/iam-attestation/metadata.crl.pem
+      PASSKEY_METADATA_LEGAL_HEADER: ${PASSKEY_METADATA_LEGAL_HEADER:?Review and configure the exact publisher legal header}
+    volumes:
+      - type: bind
+        source: ${PASSKEY_ATTESTATION_DIRECTORY:?Set the existing reviewed bundle directory}
+        target: /run/iam-attestation
+        read_only: true
+        bind:
+          create_host_path: false

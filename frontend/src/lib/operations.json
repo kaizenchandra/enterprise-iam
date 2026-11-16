@@ -1,0 +1,710 @@
+[
+  {
+    "id": "get:/api/v1/admin/users",
+    "method": "GET",
+    "path": "/api/v1/admin/users",
+    "group": "users",
+    "summary": "GET /api/v1/admin/users",
+    "description": "Requires iam-admin audience and iam.admin scope.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "page",
+        "type": "integer",
+        "required": false,
+        "location": "query",
+        "minimum": 0,
+        "maximum": 21474836
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "post:/api/v1/admin/users",
+    "method": "POST",
+    "path": "/api/v1/admin/users",
+    "group": "users",
+    "summary": "POST /api/v1/admin/users",
+    "description": "Requires iam-admin audience and iam.admin scope.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "username",
+        "type": "string",
+        "required": true,
+        "location": "body",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      {
+        "name": "password",
+        "type": "string",
+        "required": true,
+        "location": "body",
+        "minLength": 14,
+        "maxLength": 64
+      },
+      {
+        "name": "email",
+        "type": "string",
+        "required": false,
+        "location": "body",
+        "maxLength": 254,
+        "format": "email"
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "get:/api/v1/admin/users/{id}",
+    "method": "GET",
+    "path": "/api/v1/admin/users/{id}",
+    "group": "users",
+    "summary": "GET /api/v1/admin/users/{id}",
+    "description": "Requires iam-admin audience and iam.admin scope.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "patch:/api/v1/admin/users/{id}",
+    "method": "PATCH",
+    "path": "/api/v1/admin/users/{id}",
+    "group": "users",
+    "summary": "Update username with optimistic version check",
+    "description": "Requires iam-admin audience and iam.admin scope. Cannot edit email, credentials or state. Deleted users and stale versions return 409. Transactional audit required.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      },
+      {
+        "name": "username",
+        "type": "string",
+        "required": true,
+        "location": "body",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      {
+        "name": "version",
+        "type": "integer",
+        "required": true,
+        "location": "body",
+        "minimum": 0
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "delete:/api/v1/admin/users/{id}",
+    "method": "DELETE",
+    "path": "/api/v1/admin/users/{id}",
+    "group": "users",
+    "summary": "Logically delete user and revoke sessions/grants",
+    "description": "Requires iam-admin audience and iam.admin scope. Transactional audit and durable RP logout. Logical deletion retains security evidence; invalid/repeated transitions return 409.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      }
+    ],
+    "dangerous": true
+  },
+  {
+    "id": "post:/api/v1/admin/users/{id}/suspend",
+    "method": "POST",
+    "path": "/api/v1/admin/users/{id}/suspend",
+    "group": "users",
+    "summary": "POST /api/v1/admin/users/{id}/suspend",
+    "description": "Requires iam-admin audience and iam.admin scope.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      }
+    ],
+    "dangerous": true
+  },
+  {
+    "id": "post:/api/v1/admin/users/{id}/activate",
+    "method": "POST",
+    "path": "/api/v1/admin/users/{id}/activate",
+    "group": "users",
+    "summary": "POST /api/v1/admin/users/{id}/activate",
+    "description": "Requires iam-admin audience and iam.admin scope.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "get:/api/v1/admin/organizations",
+    "method": "GET",
+    "path": "/api/v1/admin/organizations",
+    "group": "organizations",
+    "summary": "GET /api/v1/admin/organizations",
+    "description": "Requires iam-admin audience and iam.admin scope.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "page",
+        "type": "integer",
+        "required": false,
+        "location": "query",
+        "minimum": 0,
+        "maximum": 21474836
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "post:/api/v1/admin/organizations",
+    "method": "POST",
+    "path": "/api/v1/admin/organizations",
+    "group": "organizations",
+    "summary": "POST /api/v1/admin/organizations",
+    "description": "Requires iam-admin audience and iam.admin scope.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "name",
+        "type": "string",
+        "required": true,
+        "location": "body",
+        "minLength": 1,
+        "maxLength": 128
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "get:/api/v1/admin/clients",
+    "method": "GET",
+    "path": "/api/v1/admin/clients",
+    "group": "applications",
+    "summary": "GET /api/v1/admin/clients",
+    "description": "Requires iam-admin audience and iam.admin scope.",
+    "lane": "admin",
+    "fields": [],
+    "dangerous": false
+  },
+  {
+    "id": "post:/api/v1/admin/clients",
+    "method": "POST",
+    "path": "/api/v1/admin/clients",
+    "group": "applications",
+    "summary": "POST /api/v1/admin/clients",
+    "description": "Requires iam-admin audience and iam.admin scope. Omitted clientAuthenticationMethod retains client_secret_basic and one-time secret issuance. private_key_jwt requires a public jwks and returns no secret. Scope allowlist remains orders.read / decision.write.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "clientId",
+        "type": "string",
+        "required": true,
+        "location": "body",
+        "pattern": "^[a-zA-Z0-9_-]{3,64}$"
+      },
+      {
+        "name": "scopes",
+        "type": "array",
+        "required": true,
+        "location": "body"
+      },
+      {
+        "name": "clientAuthenticationMethod",
+        "type": "string",
+        "required": false,
+        "location": "body",
+        "enum": [
+          "client_secret_basic",
+          "private_key_jwt"
+        ]
+      },
+      {
+        "name": "jwks",
+        "type": "object",
+        "required": false,
+        "location": "body"
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "post:/api/v1/admin/clients/{clientId}/rotate-credentials",
+    "method": "POST",
+    "path": "/api/v1/admin/clients/{clientId}/rotate-credentials",
+    "group": "applications",
+    "summary": "POST /api/v1/admin/clients/{clientId}/rotate-credentials",
+    "description": "Requires iam-admin audience and iam.admin scope.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "clientId",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      }
+    ],
+    "dangerous": true
+  },
+  {
+    "id": "post:/api/v1/admin/roles",
+    "method": "POST",
+    "path": "/api/v1/admin/roles",
+    "group": "policies",
+    "summary": "POST /api/v1/admin/roles",
+    "description": "Requires iam-admin audience and iam.admin scope.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "name",
+        "type": "string",
+        "required": true,
+        "location": "body",
+        "maxLength": 128
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "post:/api/v1/admin/permissions",
+    "method": "POST",
+    "path": "/api/v1/admin/permissions",
+    "group": "policies",
+    "summary": "POST /api/v1/admin/permissions",
+    "description": "Requires iam-admin audience and iam.admin scope.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "roleId",
+        "type": "string",
+        "required": true,
+        "location": "body"
+      },
+      {
+        "name": "permission",
+        "type": "string",
+        "required": true,
+        "location": "body",
+        "maxLength": 128
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "post:/api/v1/admin/role-assignments",
+    "method": "POST",
+    "path": "/api/v1/admin/role-assignments",
+    "group": "policies",
+    "summary": "POST /api/v1/admin/role-assignments",
+    "description": "Requires iam-admin audience and iam.admin scope.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "userId",
+        "type": "string",
+        "required": true,
+        "location": "body"
+      },
+      {
+        "name": "organizationId",
+        "type": "string",
+        "required": true,
+        "location": "body"
+      },
+      {
+        "name": "roleId",
+        "type": "string",
+        "required": true,
+        "location": "body"
+      },
+      {
+        "name": "resourceId",
+        "type": "string",
+        "required": false,
+        "location": "body"
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "delete:/api/v1/admin/role-assignments/{id}",
+    "method": "DELETE",
+    "path": "/api/v1/admin/role-assignments/{id}",
+    "group": "policies",
+    "summary": "DELETE /api/v1/admin/role-assignments/{id}",
+    "description": "Requires iam-admin audience and iam.admin scope. Tenant membership alone never grants administration. Missing assignments return 404. Deletion and audit are atomic.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      }
+    ],
+    "dangerous": true
+  },
+  {
+    "id": "get:/api/v1/admin/policies",
+    "method": "GET",
+    "path": "/api/v1/admin/policies",
+    "group": "policies",
+    "summary": "GET /api/v1/admin/policies",
+    "description": "Requires iam-admin audience and iam.admin scope.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "page",
+        "type": "integer",
+        "required": false,
+        "location": "query",
+        "minimum": 0,
+        "maximum": 21474836
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "post:/api/v1/authorization/decisions",
+    "method": "POST",
+    "path": "/api/v1/authorization/decisions",
+    "group": "decisions",
+    "summary": "POST /api/v1/authorization/decisions",
+    "description": "Requires enterprise-api audience and decision.write scope. Subject is derived from the JWT.",
+    "lane": "app",
+    "fields": [
+      {
+        "name": "tenantId",
+        "type": "string",
+        "required": true,
+        "location": "body",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      {
+        "name": "action",
+        "type": "string",
+        "required": true,
+        "location": "body",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      {
+        "name": "resourceId",
+        "type": "string",
+        "required": true,
+        "location": "body",
+        "minLength": 1,
+        "maxLength": 128
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "post:/api/v1/admin/clients/{clientId}/backchannel",
+    "method": "POST",
+    "path": "/api/v1/admin/clients/{clientId}/backchannel",
+    "group": "applications",
+    "summary": "Configure approved static OIDC back-channel endpoint",
+    "description": "Requires iam-admin audience and iam.admin scope; origin must be explicitly approved.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "clientId",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      },
+      {
+        "name": "backchannelLogoutUri",
+        "type": "string",
+        "required": true,
+        "location": "body",
+        "maxLength": 2048,
+        "format": "uri"
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "get:/api/v1/users/me/sessions",
+    "method": "GET",
+    "path": "/api/v1/users/me/sessions",
+    "group": "sessions",
+    "summary": "GET /api/v1/users/me/sessions",
+    "description": "Owner only; iam-session-management audience and sessions.read scope; live ACTIVE human OP grant. No tenant selector. Remote logout is asynchronous; offline access JWT expiry is unchanged.",
+    "lane": "management",
+    "fields": [
+      {
+        "name": "limit",
+        "type": "integer",
+        "required": false,
+        "location": "query",
+        "minimum": 1,
+        "maximum": 100
+      },
+      {
+        "name": "after",
+        "type": "string",
+        "required": false,
+        "location": "query",
+        "format": "uuid"
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "delete:/api/v1/users/me/sessions/{sessionId}",
+    "method": "DELETE",
+    "path": "/api/v1/users/me/sessions/{sessionId}",
+    "group": "sessions",
+    "summary": "DELETE /api/v1/users/me/sessions/{sessionId}",
+    "description": "Owner only; iam-session-management audience and sessions.write; live human OP grant. Retained revoked targets are idempotent; current actor token becomes ineligible after deletion. Remote logout is asynchronous; offline access JWT expiry is unchanged.",
+    "lane": "management",
+    "fields": [
+      {
+        "name": "sessionId",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      }
+    ],
+    "dangerous": true
+  },
+  {
+    "id": "post:/api/v1/admin/users/{userId}/revoke-sessions",
+    "method": "POST",
+    "path": "/api/v1/admin/users/{userId}/revoke-sessions",
+    "group": "users",
+    "summary": "POST /api/v1/admin/users/{userId}/revoke-sessions",
+    "description": "Global platform operation: iam-admin audience and iam.admin scope with a live grant. Tenant roles do not grant this authority. Advances durable login cutoff. Remote logout is asynchronous; offline access JWT expiry is unchanged.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "userId",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      }
+    ],
+    "dangerous": true
+  },
+  {
+    "id": "post:/api/v1/admin/users/{id}/email",
+    "method": "POST",
+    "path": "/api/v1/admin/users/{id}/email",
+    "group": "users",
+    "summary": "Bind/change a trusted recovery address",
+    "description": "Platform iam-admin audience and iam.admin scope plus live persisted grant. Revokes target sessions and outstanding actions, marks email unverified, notifies an old verified address and queues fresh verification. Tenant roles do not grant this global authority.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      },
+      {
+        "name": "email",
+        "type": "string",
+        "required": true,
+        "location": "body",
+        "maxLength": 254,
+        "format": "email"
+      }
+    ],
+    "dangerous": true
+  },
+  {
+    "id": "get:/api/v1/admin/clients/{clientId}/authentication-keys",
+    "method": "GET",
+    "path": "/api/v1/admin/clients/{clientId}/authentication-keys",
+    "group": "applications",
+    "summary": "Read public client assertion policy and revision",
+    "description": "",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "clientId",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "put:/api/v1/admin/clients/{clientId}/authentication-keys",
+    "method": "PUT",
+    "path": "/api/v1/admin/clients/{clientId}/authentication-keys",
+    "group": "applications",
+    "summary": "Replace public RS256 key set and enable private_key_jwt, preserving Basic",
+    "description": "",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "clientId",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      },
+      {
+        "name": "expectedRevision",
+        "type": "integer",
+        "required": true,
+        "location": "body",
+        "minimum": 0
+      },
+      {
+        "name": "jwks",
+        "type": "object",
+        "required": true,
+        "location": "body"
+      }
+    ],
+    "dangerous": true
+  },
+  {
+    "id": "delete:/api/v1/admin/clients/{clientId}/authentication-keys",
+    "method": "DELETE",
+    "path": "/api/v1/admin/clients/{clientId}/authentication-keys",
+    "group": "applications",
+    "summary": "Disable assertions while preserving another client authentication method and revision tombstone",
+    "description": "",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "clientId",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      },
+      {
+        "name": "expectedRevision",
+        "type": "integer",
+        "required": true,
+        "location": "query",
+        "minimum": 0
+      }
+    ],
+    "dangerous": true
+  },
+  {
+    "id": "post:/api/v1/admin/users/{id}/deactivate",
+    "method": "POST",
+    "path": "/api/v1/admin/users/{id}/deactivate",
+    "group": "users",
+    "summary": "Disable user and revoke sessions/grants",
+    "description": "Requires iam-admin audience and iam.admin scope. Transactional audit and durable RP logout. Logical deletion retains security evidence; invalid/repeated transitions return 409.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      }
+    ],
+    "dangerous": true
+  },
+  {
+    "id": "get:/api/v1/organizations/{id}/members",
+    "method": "GET",
+    "path": "/api/v1/organizations/{id}/members",
+    "group": "organizations",
+    "summary": "List organization memberships",
+    "description": "Requires iam-admin audience and iam.admin scope. Tenant membership alone never grants administration.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      },
+      {
+        "name": "page",
+        "type": "integer",
+        "required": false,
+        "location": "query",
+        "minimum": 0,
+        "maximum": 21474836
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "post:/api/v1/organizations/{id}/members",
+    "method": "POST",
+    "path": "/api/v1/organizations/{id}/members",
+    "group": "organizations",
+    "summary": "Add active user to organization",
+    "description": "Requires iam-admin audience and iam.admin scope. Tenant membership alone never grants administration. Duplicate requests return 409. Writes and audit commit atomically.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      },
+      {
+        "name": "userId",
+        "type": "string",
+        "required": true,
+        "location": "body",
+        "minLength": 1,
+        "maxLength": 36
+      }
+    ],
+    "dangerous": false
+  },
+  {
+    "id": "delete:/api/v1/organizations/{id}/members/{userId}",
+    "method": "DELETE",
+    "path": "/api/v1/organizations/{id}/members/{userId}",
+    "group": "organizations",
+    "summary": "Remove membership and all its role assignments",
+    "description": "Requires iam-admin audience and iam.admin scope. Tenant membership alone never grants administration. Rejoining never restores removed assignments. Transactional audit; repeated removal returns 404. Subsequent primary-database PDP snapshots deny removed rights; no offline JWT revocation is implied.",
+    "lane": "admin",
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      },
+      {
+        "name": "userId",
+        "type": "string",
+        "required": true,
+        "location": "path"
+      }
+    ],
+    "dangerous": true
+  }
+]

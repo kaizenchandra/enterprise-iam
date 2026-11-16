@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width" name="viewport">
+    <title>Login sessions</title>
+    <style>body {
+        font: 1rem system-ui;
+        max-width: 76rem;
+        margin: 2rem auto;
+        padding: 1rem
+    }
+
+    td, th {
+        text-align: left;
+        padding: .7rem;
+        border-bottom: 1px solid #bbb
+    }
+
+    table {
+        border-collapse: collapse
+    }
+
+    button {
+        padding: .5rem
+    }
+
+    caption {
+        text-align: left;
+        margin: 1rem 0
+    }
+
+    .table {
+        overflow-x: auto
+    }</style>
+</head>
+<body>
+<nav><a href="/">Portal home</a></nav>
+<h1>Login sessions</h1>
+<p>These are your IAM login sessions across applications, not verified physical devices. Revoking a session ends its
+    refresh access and sends logout to connected applications. Already-issued API tokens may remain valid until
+    expiry.</p>
+<div class="table">
+    <table>
+        <caption>Your sessions — current means the IAM session used to connect these controls.</caption>
+        <thead>
+        <tr>
+            <th>Session</th>
+            <th>Created</th>
+            <th>Last IAM activity</th>
+            <th>Idle expiry</th>
+            <th>Absolute expiry</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:attr="data-session-id=${item.id},data-current=${item.current}" th:each="item : ${page.items}">
+            <td><span th:text="${item.id}"></span> <strong th:if="${item.current}">Current session</strong></td>
+            <td th:text="${item.createdAt}"></td>
+            <td th:text="${item.lastSeenAt}"></td>
+            <td th:text="${item.idleExpiresAt}"></td>
+            <td th:text="${item.absoluteExpiresAt}"></td>
+            <td th:text="${item.status}"></td>
+            <td>
+                <form method="post" th:action="@{/sessions/{id}/revoke(id=${item.id})}"
+                      th:if="${item.status != 'REVOKED'}">
+                    <button th:text="${item.current ? 'Revoke current session and sign out' : 'Revoke session'}"></button>
+                </form>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(page.items)}">
+            <td colspan="7">No sessions on this page.</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<p><a href="/sessions">Refresh / first page</a> <a th:href="@{/sessions(after=${page.nextCursor})}"
+                                                   th:if="${page.nextCursor != null}">Next page</a></p>
+</body>
+</html>

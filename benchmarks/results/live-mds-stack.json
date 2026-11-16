@@ -1,0 +1,16 @@
+{
+  "kind": "isolated-two-node-live-mds-startup",
+  "recordedAt": "2026-11-15T11:35:45.193101+00:00",
+  "serial": 301,
+  "blobCharacters": 11148970,
+  "eligibleModels": 0,
+  "primaryReady": true,
+  "peerReady": true,
+  "metadataTransport": "local mirror of public signed candidate",
+  "opHeapMiBPerNode": 256,
+  "workerHeapMiB": 256,
+  "limits": [
+    "Isolated temporary schemas and test identities; no production trust publication",
+    "Ready checks and peer cache warmup only; not authentication throughput or physical-device interoperability"
+  ]
+}

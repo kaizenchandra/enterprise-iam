@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Enterprise IAM portal</title></head>
+<body><h1>Enterprise IAM client</h1>
+<p>Your tokens remain in the server-side session.</p><a href="/sessions">Manage login sessions</a> <a href="/profile">My
+    identity</a> <a href="/orders">Protected orders API</a>
+<form method="post" th:action="@{/logout}">
+    <button>Sign out of this client and IAM</button>
+</form>
+<p>Open the other client on port 8081 to demonstrate SSO.</p></body>
+</html>

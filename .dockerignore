@@ -1,0 +1,8 @@
+**/target
+secrets
+.env
+**/node_modules
+**/.next
+**/.env.local
+**/.env.*.local
+**/__pycache__

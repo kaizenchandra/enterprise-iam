@@ -1,0 +1,10 @@
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false
+iam:
+  backchannel:
+    allow-http: true
+    allowed-origins: ${IAM_BACKCHANNEL_ALLOWED_ORIGINS:http://localhost:8080,http://localhost:8081,http://localhost:3000}
+  issuer: http://localhost:9000

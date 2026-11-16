@@ -1,0 +1,9 @@
+server:
+  port: 9001
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${IAM_ISSUER:http://localhost:9000}
+          jwk-set-uri: ${IAM_JWKS:http://localhost:9000/oauth2/jwks}

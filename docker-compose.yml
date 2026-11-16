@@ -1,0 +1,126 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: iam
+      POSTGRES_USER: iam
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Run scripts/init-local.sh}
+    ports: [ "127.0.0.1:5432:5432" ]
+    volumes: [ "postgres-data:/var/lib/postgresql/data" ]
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U iam" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: redis:7.4-alpine
+    command: [ "redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction" ]
+    ports: [ "127.0.0.1:6379:6379" ]
+    volumes: [ "redis-data:/data" ]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  iam:
+    user: "${LOCAL_UID:-10001}:${LOCAL_GID:-10001}"
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      AUTH_UI_ORIGIN: ${AUTH_UI_ORIGIN:-http://iam.localhost:3000}
+      IAM_ISSUER: http://iam.localhost:9000
+      IAM_BACKCHANNEL_ALLOWED_ORIGINS: http://portal-a:8080,http://portal-b:8081,http://localhost:3000
+      PORTAL_A_BACKCHANNEL_URI: http://portal-a:8080/logout/connect/back-channel/iam
+      PORTAL_B_BACKCHANNEL_URI: http://portal-b:8081/logout/connect/back-channel/iam
+      DB_URL: jdbc:postgresql://postgres:5432/iam
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      SIGNING_KEY_FILE: /keys/signing.jwks
+      DEMO_PASSWORD: ${DEMO_PASSWORD}
+      PORTAL_SECRET: ${PORTAL_SECRET}
+      MACHINE_SECRET: ${MACHINE_SECRET}
+      ADMIN_SECRET: ${ADMIN_SECRET}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      PASSKEY_METADATA_SOURCE: ${PASSKEY_METADATA_SOURCE:-OFFLINE}
+      PASSKEY_MDS_SIGNER_NAME: ${PASSKEY_MDS_SIGNER_NAME:-}
+      PASSKEY_MDS_URL: ${PASSKEY_MDS_URL:-https://mds.fidoalliance.org/}
+      PASSKEY_MDS_ORIGINS: ${PASSKEY_MDS_ORIGINS:-https://mds.fidoalliance.org,https://crl.globalsign.com}
+      PASSKEY_MDS_TIMEOUT_SECONDS: ${PASSKEY_MDS_TIMEOUT_SECONDS:-20}
+      PASSKEY_ATTESTATION_MODE: ${PASSKEY_ATTESTATION_MODE:-NONE}
+      PASSKEY_ATTESTATION_POLICY_REVISION: ${PASSKEY_ATTESTATION_POLICY_REVISION:-1}
+      PASSKEY_METADATA_FILE: ${PASSKEY_METADATA_FILE:-}
+      PASSKEY_METADATA_SIGNING_ROOTS_FILE: ${PASSKEY_METADATA_SIGNING_ROOTS_FILE:-}
+      PASSKEY_AUTHENTICATOR_ROOTS_FILE: ${PASSKEY_AUTHENTICATOR_ROOTS_FILE:-}
+      PASSKEY_METADATA_CRLS_FILE: ${PASSKEY_METADATA_CRLS_FILE:-}
+      PASSKEY_METADATA_LEGAL_HEADER: ${PASSKEY_METADATA_LEGAL_HEADER:-}
+      PASSKEY_METADATA_MAXIMUM_AGE: ${PASSKEY_METADATA_MAXIMUM_AGE:-PT24H}
+      PASSKEYS_ENABLED: ${PASSKEYS_ENABLED:-false}
+      PASSKEY_RP_ID: ${PASSKEY_RP_ID:-iam.localhost}
+      PASSKEY_ORIGINS: ${PASSKEY_ORIGINS:-http://iam.localhost:9000}
+      PASSKEY_ALLOW_LOCAL_HTTP: "true"
+      ACCOUNT_ACTIONS_ENABLED: ${ACCOUNT_ACTIONS_ENABLED:-false}
+      REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-false}
+      ACCOUNT_CONSOLE_ORIGIN: ${ACCOUNT_CONSOLE_ORIGIN:-}
+      ACCOUNT_ENCRYPTION_PASSWORD: ${ACCOUNT_ENCRYPTION_PASSWORD:-}
+      ACCOUNT_ENCRYPTION_SALT: ${ACCOUNT_ENCRYPTION_SALT:-}
+      ACCOUNT_ALLOW_HTTP: "true"
+      ACCOUNT_PUBLIC_ORIGIN: ${ACCOUNT_PUBLIC_ORIGIN:-http://localhost:9000}
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_STARTTLS: "false"
+      MFA_REQUIRED: ${MFA_REQUIRED:-false}
+      MFA_REMOVAL_ALLOWED: ${MFA_REMOVAL_ALLOWED:-true}
+      MFA_ENCRYPTION_PASSWORD: ${MFA_ENCRYPTION_PASSWORD}
+      MFA_ENCRYPTION_SALT: ${MFA_ENCRYPTION_SALT}
+    volumes: [ "./secrets/signing.jwks:/keys/signing.jwks:ro" ]
+    ports: [ "127.0.0.1:9000:9000" ]
+    networks:
+      default:
+        aliases: [ iam.localhost ]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+  resource:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args: { MODULE: sample-resource-server }
+    environment:
+      IAM_ISSUER: http://iam.localhost:9000
+      IAM_JWKS: http://iam.localhost:9000/oauth2/jwks
+    ports: [ "127.0.0.1:9001:9001" ]
+  portal-a: &portal
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args: { MODULE: sample-web-client }
+    environment: &portal-env
+      SESSION_COOKIE_SECURE: "false"
+      IAM_ISSUER: http://iam.localhost:9000
+      CLIENT_SECRET: ${PORTAL_SECRET}
+      RESOURCE_URL: http://resource:9001
+      DB_URL: jdbc:postgresql://postgres:5432/iam
+      DB_PASSWORD: ${DB_PASSWORD}
+      CLIENT_SCHEMA: portal_a
+    ports: [ "127.0.0.1:8080:8080" ]
+    restart: on-failure:3
+    depends_on: [ iam ]
+  portal-b:
+    <<: *portal
+    environment:
+      <<: *portal-env
+      PORT: 8081
+      SESSION_COOKIE_SECURE: "false"
+      CLIENT_ID: portal-b
+      SESSION_COOKIE: CLIENT_B
+      CLIENT_SCHEMA: portal_b
+    ports: [ "127.0.0.1:8081:8081" ]
+  mailpit:
+    image: axllent/mailpit:v1.33.1
+    profiles: [ mail ]
+    ports: [ "127.0.0.1:8025:8025", "127.0.0.1:2525:1025" ]
+volumes:
+  postgres-data:
+  redis-data:

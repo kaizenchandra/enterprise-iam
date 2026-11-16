@@ -1,0 +1,68 @@
+{
+  "kind": "bounded-local-client-authentication-comparison",
+  "recordedAt": "2026-11-15T12:27:52.847929Z",
+  "javaVersion": "21.0.13.0.3",
+  "platform": "Mac OS X",
+  "arch": "aarch64",
+  "hostLogicalCpus": 11,
+  "opMaxHeapMiB": 256,
+  "assertionAlgorithm": "RS256",
+  "clientRsaBits": 2048,
+  "assertionLifetimeSeconds": 30,
+  "bcryptCost": 12,
+  "runs": [
+    {
+      "authenticationMethod": "client_secret_basic",
+      "startedAt": "2026-11-15T12:27:32.748918Z",
+      "offeredRatePerSecond": 5,
+      "offeredRequests": 50,
+      "durationSeconds": 10,
+      "maxConcurrency": 8,
+      "attempted": 50,
+      "successful": 50,
+      "errors": 0,
+      "dropped": 0,
+      "statuses": {
+        "200": 50
+      },
+      "elapsedSeconds": 10.124,
+      "achievedSuccessesPerSecond": 4.939,
+      "maxClientSchedulingLagMs": 25.864,
+      "latencyMs": {
+        "p50": 318.733,
+        "p99": 583.593,
+        "p95": 491.285
+      }
+    },
+    {
+      "authenticationMethod": "private_key_jwt",
+      "startedAt": "2026-11-15T12:27:43.019374Z",
+      "offeredRatePerSecond": 5,
+      "offeredRequests": 50,
+      "durationSeconds": 10,
+      "maxConcurrency": 8,
+      "attempted": 50,
+      "successful": 50,
+      "errors": 0,
+      "dropped": 0,
+      "statuses": {
+        "200": 50
+      },
+      "elapsedSeconds": 9.828,
+      "achievedSuccessesPerSecond": 5.087,
+      "maxClientSchedulingLagMs": 6.255,
+      "latencyMs": {
+        "p50": 23.209,
+        "p99": 61.981,
+        "p95": 48.615
+      }
+    }
+  ],
+  "limits": [
+    "Two sequential 50-request runs at 5 requests/second; same Java HTTP driver, client identity, issuer, scopes, signing keys and isolated database",
+    "Three warmups per method excluded; client assertion signing, HTTP and durable replay commits included in asymmetric latency",
+    "Basic first, asymmetric second: order, warm caches and shared-host contention can affect comparison; no CPU/wall-time attribution",
+    "Localhost HTTP, 256 MiB IAM heap, small data, same-host PostgreSQL/Redis/JVMs; no production capacity, saturation, soak or SLO claim",
+    "p99 is the observed maximum of 50 samples per method; server security controls and BCrypt cost preserved; no reusable credentials exported"
+  ]
+}

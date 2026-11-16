@@ -1,0 +1,22 @@
+{
+  "kind": "read-only-live-public-mds-probe",
+  "recordedAt": "2026-11-15T10:51:22.264627Z",
+  "signatureAndPkixVerified": true,
+  "retrieved": false,
+  "serial": 301,
+  "nextUpdate": "2026-12-01",
+  "validUntil": "2026-11-21T12:50:56Z",
+  "blobBytes": 11148970,
+  "entries": 537,
+  "fido2Models": 365,
+  "eligibleModels": 0,
+  "crls": 3,
+  "elapsedMs": 8054.453,
+  "javaVersion": "21.0.13.0.3",
+  "limits": [
+    "Single live retrieval/verification, not a load or production-capacity test",
+    "No device enrollment, authorization or database publication",
+    "Authenticator roots must be independently reviewed; this probe never imports all metadata roots",
+    "Physical device and vendor interoperability not established"
+  ]
+}

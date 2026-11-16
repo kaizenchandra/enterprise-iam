@@ -1,0 +1,47 @@
+server:
+  port: ${PORT:8080}
+  tomcat:
+    max-http-form-post-size: 16KB
+  servlet:
+    session:
+      cookie:
+        name: ${SESSION_COOKIE:CLIENT_A}
+        http-only: true
+        secure: ${SESSION_COOKIE_SECURE:true}
+        same-site: lax
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/iam}
+    username: ${DB_USER:iam}
+    password: ${DB_PASSWORD}
+    hikari:
+      schema: ${CLIENT_SCHEMA:portal_a}
+      maximum-pool-size: 10
+      connection-timeout: 2000
+  flyway:
+    schemas: ${CLIENT_SCHEMA:portal_a}
+    default-schema: ${CLIENT_SCHEMA:portal_a}
+  session:
+    jdbc:
+      initialize-schema: never
+      flush-mode: immediate
+  security:
+    oauth2:
+      client:
+        registration:
+          iam:
+            client-name: Enterprise portal
+            client-id: ${CLIENT_ID:portal-a}
+            client-secret: ${CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            scope: openid,profile,orders.read
+          iam-management:
+            client-name: Session controls (sign in first)
+            provider: iam
+            client-id: ${CLIENT_ID:portal-a}
+            client-secret: ${CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            scope: openid,profile,sessions.read,sessions.write
+        provider:
+          iam:
+            issuer-uri: ${IAM_ISSUER:http://localhost:9000}

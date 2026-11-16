@@ -1,0 +1,2182 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Enterprise IAM implemented API subset",
+    "version": "0.1.0",
+    "description": "Only implemented paths are included. OAuth/OIDC endpoints are described by runtime discovery. Idempotency keys and comprehensive Problem Details are incomplete."
+  },
+  "security": [
+    {
+      "bearer": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "opSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "IAM_SESSION",
+        "description": "Password- or passkey-authenticated OP browser session with any configured MFA proof; all POSTs require CSRF. Not bearer authentication."
+      },
+      "csrfContext": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "IAM_SESSION",
+        "description": "Anonymous or authenticated OP CSRF context; POST requires matching _csrf form field or X-CSRF-TOKEN header."
+      }
+    },
+    "schemas": {
+      "ManagedSession": {
+        "type": "object",
+        "required": [
+          "id",
+          "createdAt",
+          "lastSeenAt",
+          "idleExpiresAt",
+          "absoluteExpiresAt",
+          "status",
+          "current"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idleExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "absoluteExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "EXPIRED",
+              "REVOKED"
+            ]
+          },
+          "current": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SessionPage": {
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManagedSession"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/admin/users": {
+      "get": {
+        "summary": "GET /api/v1/admin/users",
+        "description": "Requires iam-admin audience and iam.admin scope.",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 21474836,
+              "default": 0
+            },
+            "description": "Zero-based page; at most 100 rows, stable identifier order."
+          }
+        ]
+      },
+      "post": {
+        "summary": "POST /api/v1/admin/users",
+        "description": "Requires iam-admin audience and iam.admin scope.",
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 14,
+                    "maxLength": 64,
+                    "writeOnly": true
+                  },
+                  "email": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "email",
+                    "maxLength": 254,
+                    "description": "Optional trusted address binding; initially unverified. Verification is requested through the public form."
+                  }
+                },
+                "required": [
+                  "username",
+                  "password"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{id}": {
+      "get": {
+        "summary": "GET /api/v1/admin/users/{id}",
+        "description": "Requires iam-admin audience and iam.admin scope.",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "summary": "Update username with optimistic version check",
+        "description": "Requires iam-admin audience and iam.admin scope. Cannot edit email, credentials or state. Deleted users and stale versions return 409. Transactional audit required.",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "version"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Logically delete user and revoke sessions/grants",
+        "description": "Requires iam-admin audience and iam.admin scope. Transactional audit and durable RP logout. Logical deletion retains security evidence; invalid/repeated transitions return 409.",
+        "responses": {
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users/{id}/suspend": {
+      "post": {
+        "summary": "POST /api/v1/admin/users/{id}/suspend",
+        "description": "Requires iam-admin audience and iam.admin scope.",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users/{id}/activate": {
+      "post": {
+        "summary": "POST /api/v1/admin/users/{id}/activate",
+        "description": "Requires iam-admin audience and iam.admin scope.",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/organizations": {
+      "get": {
+        "summary": "GET /api/v1/admin/organizations",
+        "description": "Requires iam-admin audience and iam.admin scope.",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 21474836,
+              "default": 0
+            },
+            "description": "Zero-based page; at most 100 rows, stable identifier order."
+          }
+        ]
+      },
+      "post": {
+        "summary": "POST /api/v1/admin/organizations",
+        "description": "Requires iam-admin audience and iam.admin scope.",
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/clients": {
+      "get": {
+        "summary": "GET /api/v1/admin/clients",
+        "description": "Requires iam-admin audience and iam.admin scope.",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          }
+        }
+      },
+      "post": {
+        "summary": "POST /api/v1/admin/clients",
+        "description": "Requires iam-admin audience and iam.admin scope. Omitted clientAuthenticationMethod retains client_secret_basic and one-time secret issuance. private_key_jwt requires a public jwks and returns no secret. Scope allowlist remains orders.read / decision.write.",
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "clientId": {
+                    "type": "string",
+                    "pattern": "^[a-zA-Z0-9_-]{3,64}$"
+                  },
+                  "scopes": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "orders.read",
+                        "decision.write"
+                      ]
+                    }
+                  },
+                  "clientAuthenticationMethod": {
+                    "type": "string",
+                    "enum": [
+                      "client_secret_basic",
+                      "private_key_jwt"
+                    ],
+                    "default": "client_secret_basic"
+                  },
+                  "jwks": {
+                    "type": "object",
+                    "description": "Required only for private_key_jwt registration; public RS256 key set. Use authentication-keys endpoint to migrate existing clients.",
+                    "required": [
+                      "keys"
+                    ],
+                    "properties": {
+                      "keys": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 3,
+                        "items": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "clientId",
+                  "scopes"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/clients/{clientId}/rotate-credentials": {
+      "post": {
+        "summary": "POST /api/v1/admin/clients/{clientId}/rotate-credentials",
+        "description": "Requires iam-admin audience and iam.admin scope.",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          }
+        },
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/roles": {
+      "post": {
+        "summary": "POST /api/v1/admin/roles",
+        "description": "Requires iam-admin audience and iam.admin scope.",
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 128
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/permissions": {
+      "post": {
+        "summary": "POST /api/v1/admin/permissions",
+        "description": "Requires iam-admin audience and iam.admin scope.",
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "roleId": {
+                    "type": "string"
+                  },
+                  "permission": {
+                    "type": "string",
+                    "maxLength": 128
+                  }
+                },
+                "required": [
+                  "roleId",
+                  "permission"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/role-assignments": {
+      "post": {
+        "summary": "POST /api/v1/admin/role-assignments",
+        "description": "Requires iam-admin audience and iam.admin scope.",
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string"
+                  },
+                  "organizationId": {
+                    "type": "string"
+                  },
+                  "roleId": {
+                    "type": "string"
+                  },
+                  "resourceId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "userId",
+                  "organizationId",
+                  "roleId"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/role-assignments/{id}": {
+      "delete": {
+        "summary": "DELETE /api/v1/admin/role-assignments/{id}",
+        "description": "Requires iam-admin audience and iam.admin scope. Tenant membership alone never grants administration. Missing assignments return 404. Deletion and audit are atomic.",
+        "responses": {
+          "204": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/policies": {
+      "get": {
+        "summary": "GET /api/v1/admin/policies",
+        "description": "Requires iam-admin audience and iam.admin scope.",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 21474836,
+              "default": 0
+            },
+            "description": "Zero-based page; at most 100 rows, stable identifier order."
+          }
+        ]
+      }
+    },
+    "/api/v1/authorization/decisions": {
+      "post": {
+        "summary": "POST /api/v1/authorization/decisions",
+        "description": "Requires enterprise-api audience and decision.write scope. Subject is derived from the JWT.",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "action": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "resourceId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  }
+                },
+                "required": [
+                  "tenantId",
+                  "action",
+                  "resourceId"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/clients/{clientId}/backchannel": {
+      "post": {
+        "summary": "Configure approved static OIDC back-channel endpoint",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "description": "Requires iam-admin audience and iam.admin scope; origin must be explicitly approved.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "backchannelLogoutUri"
+                ],
+                "properties": {
+                  "backchannelLogoutUri": {
+                    "type": "string",
+                    "format": "uri",
+                    "maxLength": 2048
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Endpoint metadata, no credentials"
+          },
+          "400": {
+            "description": "Invalid/unapproved origin"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Insufficient administrative authority"
+          },
+          "404": {
+            "description": "Unknown client"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/sessions": {
+      "get": {
+        "summary": "GET /api/v1/users/me/sessions",
+        "description": "Owner only; iam-session-management audience and sessions.read scope; live ACTIVE human OP grant. No tenant selector. Remote logout is asynchronous; offline access JWT expiry is unchanged.",
+        "responses": {
+          "200": {
+            "description": "Session page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "401": {
+            "description": "Invalid or missing bearer authentication"
+          },
+          "403": {
+            "description": "Insufficient authority or inactive actor grant"
+          },
+          "404": {
+            "description": "Unknown or unowned target"
+          },
+          "503": {
+            "description": "Session store unavailable; sanitized Problem Details"
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/users/me/sessions/{sessionId}": {
+      "delete": {
+        "summary": "DELETE /api/v1/users/me/sessions/{sessionId}",
+        "description": "Owner only; iam-session-management audience and sessions.write; live human OP grant. Retained revoked targets are idempotent; current actor token becomes ineligible after deletion. Remote logout is asynchronous; offline access JWT expiry is unchanged.",
+        "responses": {
+          "204": {
+            "description": "Committed revocation"
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "401": {
+            "description": "Invalid or missing bearer authentication"
+          },
+          "403": {
+            "description": "Insufficient authority or inactive actor grant"
+          },
+          "404": {
+            "description": "Unknown or unowned target"
+          },
+          "503": {
+            "description": "Session store unavailable; sanitized Problem Details"
+          }
+        },
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users/{userId}/revoke-sessions": {
+      "post": {
+        "summary": "POST /api/v1/admin/users/{userId}/revoke-sessions",
+        "description": "Global platform operation: iam-admin audience and iam.admin scope with a live grant. Tenant roles do not grant this authority. Advances durable login cutoff. Remote logout is asynchronous; offline access JWT expiry is unchanged.",
+        "responses": {
+          "204": {
+            "description": "Committed revocation"
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "401": {
+            "description": "Invalid or missing bearer authentication"
+          },
+          "403": {
+            "description": "Insufficient authority or inactive actor grant"
+          },
+          "404": {
+            "description": "Unknown or unowned target"
+          },
+          "503": {
+            "description": "Session store unavailable; sanitized Problem Details"
+          }
+        },
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/mfa": {
+      "get": {
+        "summary": "GET /mfa",
+        "description": "Session-bound MFA with durable proof and per-user lockout. See mfa-assurance.md. Enrollment confirmation revokes previous sessions and queues logout.",
+        "security": [
+          {
+            "opSession": []
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect through login, or continue original authorization after proof"
+          },
+          "401": {
+            "description": "Invalid proof or inactive session"
+          },
+          "403": {
+            "description": "Missing/invalid CSRF"
+          },
+          "429": {
+            "description": "Attempt/IP limit"
+          },
+          "503": {
+            "description": "Verification state unavailable; sanitized response"
+          },
+          "200": {
+            "description": "Challenge HTML, or one-time enrollment recovery-code display"
+          }
+        }
+      }
+    },
+    "/mfa/enroll": {
+      "post": {
+        "summary": "POST /mfa/enroll",
+        "description": "Session-bound MFA with durable proof and per-user lockout. See mfa-assurance.md. Enrollment confirmation revokes previous sessions and queues logout.",
+        "security": [
+          {
+            "opSession": []
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect through login, or continue original authorization after proof"
+          },
+          "401": {
+            "description": "Invalid proof or inactive session"
+          },
+          "403": {
+            "description": "Missing/invalid CSRF"
+          },
+          "429": {
+            "description": "Attempt/IP limit"
+          },
+          "503": {
+            "description": "Verification state unavailable; sanitized response"
+          },
+          "200": {
+            "description": "Authorized pending authenticator seed and parameters; no-store"
+          },
+          "409": {
+            "description": "Authenticator already enabled"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "password",
+                  "_csrf"
+                ],
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "writeOnly": true
+                  },
+                  "_csrf": {
+                    "type": "string",
+                    "writeOnly": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mfa/verify": {
+      "post": {
+        "summary": "POST /mfa/verify",
+        "description": "Session-bound MFA with durable proof and per-user lockout. See mfa-assurance.md. Enrollment confirmation revokes previous sessions and queues logout.",
+        "security": [
+          {
+            "opSession": []
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect through login, or continue original authorization after proof"
+          },
+          "401": {
+            "description": "Invalid proof or inactive session"
+          },
+          "403": {
+            "description": "Missing/invalid CSRF"
+          },
+          "429": {
+            "description": "Attempt/IP limit"
+          },
+          "503": {
+            "description": "Verification state unavailable; sanitized response"
+          },
+          "200": {
+            "description": "Challenge HTML, or one-time enrollment recovery-code display"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code",
+                  "_csrf"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "writeOnly": true
+                  },
+                  "_csrf": {
+                    "type": "string",
+                    "writeOnly": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mfa/recover": {
+      "post": {
+        "summary": "POST /mfa/recover",
+        "description": "Session-bound MFA with durable proof and per-user lockout. See mfa-assurance.md. Enrollment confirmation revokes previous sessions and queues logout.",
+        "security": [
+          {
+            "opSession": []
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect through login, or continue original authorization after proof"
+          },
+          "401": {
+            "description": "Invalid proof or inactive session"
+          },
+          "403": {
+            "description": "Missing/invalid CSRF"
+          },
+          "429": {
+            "description": "Attempt/IP limit"
+          },
+          "503": {
+            "description": "Verification state unavailable; sanitized response"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code",
+                  "_csrf"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "writeOnly": true
+                  },
+                  "_csrf": {
+                    "type": "string",
+                    "writeOnly": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/account/verify": {
+      "get": {
+        "summary": "Render public verify form",
+        "security": [],
+        "description": "Never consumes tokens. Links carry bearer secrets in fragments; all submissions require the CSRF context.",
+        "responses": {
+          "200": {
+            "description": "No-store HTML with no-referrer/CSP"
+          }
+        }
+      },
+      "post": {
+        "summary": "Complete verify",
+        "security": [
+          {
+            "csrfContext": []
+          }
+        ],
+        "description": "CSRF cookie/token context required; authenticated identity is not required. Purpose/version/expiry/single-use checks. Reset revokes sessions and preserves MFA; verification never restores a suspended/disabled identity.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token",
+                  "_csrf"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$",
+                    "writeOnly": true
+                  },
+                  "_csrf": {
+                    "type": "string",
+                    "writeOnly": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Action committed; sign in normally"
+          },
+          "400": {
+            "description": "Invalid input or invalid/unavailable action"
+          },
+          "403": {
+            "description": "CSRF rejected"
+          },
+          "429": {
+            "description": "IP/attempt limit"
+          },
+          "503": {
+            "description": "Disabled/unavailable service; sanitized error"
+          }
+        }
+      }
+    },
+    "/account/verify/request": {
+      "post": {
+        "summary": "Request verify delivery",
+        "security": [
+          {
+            "csrfContext": []
+          }
+        ],
+        "description": "CSRF cookie/token context required; authenticated identity is not required. Same generic response for eligible/unknown/cooldown requests; asynchronous eligibility check.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "_csrf"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 254
+                  },
+                  "_csrf": {
+                    "type": "string",
+                    "writeOnly": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generic request accepted"
+          },
+          "400": {
+            "description": "Invalid input or invalid/unavailable action"
+          },
+          "403": {
+            "description": "CSRF rejected"
+          },
+          "429": {
+            "description": "IP/attempt limit"
+          },
+          "503": {
+            "description": "Disabled/unavailable service; sanitized error"
+          }
+        }
+      }
+    },
+    "/account/reset": {
+      "get": {
+        "summary": "Render public reset form",
+        "security": [],
+        "description": "Never consumes tokens. Links carry bearer secrets in fragments; all submissions require the CSRF context.",
+        "responses": {
+          "200": {
+            "description": "No-store HTML with no-referrer/CSP"
+          }
+        }
+      },
+      "post": {
+        "summary": "Complete reset",
+        "security": [
+          {
+            "csrfContext": []
+          }
+        ],
+        "description": "CSRF cookie/token context required; authenticated identity is not required. Purpose/version/expiry/single-use checks. Reset revokes sessions and preserves MFA; verification never restores a suspended/disabled identity.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token",
+                  "password",
+                  "confirmation",
+                  "_csrf"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$",
+                    "writeOnly": true
+                  },
+                  "password": {
+                    "type": "string",
+                    "writeOnly": true,
+                    "description": "14..64 Unicode code points, at most 72 UTF-8 bytes"
+                  },
+                  "confirmation": {
+                    "type": "string",
+                    "writeOnly": true
+                  },
+                  "_csrf": {
+                    "type": "string",
+                    "writeOnly": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Action committed; sign in normally"
+          },
+          "400": {
+            "description": "Invalid input or invalid/unavailable action"
+          },
+          "403": {
+            "description": "CSRF rejected"
+          },
+          "429": {
+            "description": "IP/attempt limit"
+          },
+          "503": {
+            "description": "Disabled/unavailable service; sanitized error"
+          }
+        }
+      }
+    },
+    "/account/reset/request": {
+      "post": {
+        "summary": "Request reset delivery",
+        "security": [
+          {
+            "csrfContext": []
+          }
+        ],
+        "description": "CSRF cookie/token context required; authenticated identity is not required. Same generic response for eligible/unknown/cooldown requests; asynchronous eligibility check.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "_csrf"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 254
+                  },
+                  "_csrf": {
+                    "type": "string",
+                    "writeOnly": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generic request accepted"
+          },
+          "400": {
+            "description": "Invalid input or invalid/unavailable action"
+          },
+          "403": {
+            "description": "CSRF rejected"
+          },
+          "429": {
+            "description": "IP/attempt limit"
+          },
+          "503": {
+            "description": "Disabled/unavailable service; sanitized error"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{id}/email": {
+      "post": {
+        "summary": "Bind/change a trusted recovery address",
+        "description": "Platform iam-admin audience and iam.admin scope plus live persisted grant. Revokes target sessions and outstanding actions, marks email unverified, notifies an old verified address and queues fresh verification. Tenant roles do not grant this global authority.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 254
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Binding committed or unchanged"
+          },
+          "400": {
+            "description": "Invalid address"
+          },
+          "401": {
+            "description": "Invalid authentication"
+          },
+          "403": {
+            "description": "Insufficient platform authority or inactive grant"
+          },
+          "404": {
+            "description": "Unknown user"
+          },
+          "409": {
+            "description": "Address conflict/deleted identity"
+          },
+          "503": {
+            "description": "Disabled/unavailable service"
+          }
+        }
+      }
+    },
+    "/passkeys": {
+      "get": {
+        "summary": "List current identity passkeys as HTML",
+        "security": [
+          {
+            "opSession": []
+          }
+        ],
+        "description": "Live OP session and configured MFA required. Owner-scoped random management IDs; no credential blobs.",
+        "responses": {
+          "200": {
+            "description": "No-store HTML credential management"
+          },
+          "503": {
+            "description": "Disabled feature"
+          }
+        }
+      }
+    },
+    "/passkeys/register/options": {
+      "post": {
+        "summary": "Begin reauthenticated enrollment",
+        "security": [
+          {
+            "opSession": []
+          }
+        ],
+        "description": "Two-minute browser-session-bound single-use challenge; exact configured RP origins, user verification required. Current password and live MFA-assured OP session; enrollment completion revokes existing sessions.",
+        "responses": {
+          "200": {
+            "description": "Ceremony UUID and browser library options JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "options"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "options": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid, expired, replayed or cryptographically rejected ceremony"
+          },
+          "401": {
+            "description": "Reauthentication failed or session ineligible"
+          },
+          "403": {
+            "description": "CSRF rejected"
+          },
+          "429": {
+            "description": "Bounded IP/flow throttle; Retry-After header"
+          },
+          "503": {
+            "description": "Feature disabled or sanitized store failure"
+          },
+          "409": {
+            "description": "Credential capacity reached"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "password"
+                ],
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "writeOnly": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/passkeys/register/finish": {
+      "post": {
+        "summary": "Verify registration and revoke prior sessions",
+        "security": [
+          {
+            "opSession": []
+          }
+        ],
+        "description": "CSRF header required. Library performs protocol/cryptographic verification; 64 KiB maximum body. Invalid responses consume the challenge. Commits public key, revocation cutoff, family revocation, logout outbox and audit atomically. In optional REQUIRED mode, verified hardware attestation, current signed metadata/status, explicit CA trust and a device-bound credential are required; no new identity assurance claim is issued.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "credential"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "credential": {
+                    "type": "object",
+                    "writeOnly": true,
+                    "description": "Native PublicKeyCredential.toJSON response; never logged"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Fixed redirect JSON; new primary session or sign-in after enrollment"
+          },
+          "400": {
+            "description": "Invalid, expired, replayed or cryptographically rejected ceremony"
+          },
+          "401": {
+            "description": "Reauthentication failed or session ineligible"
+          },
+          "403": {
+            "description": "CSRF rejected"
+          },
+          "429": {
+            "description": "Bounded IP/flow throttle; Retry-After header"
+          },
+          "503": {
+            "description": "Feature disabled or sanitized store failure"
+          },
+          "413": {
+            "description": "Finish body exceeds 64 KiB"
+          }
+        }
+      }
+    },
+    "/passkeys/login/options": {
+      "post": {
+        "summary": "Begin discoverable assertion",
+        "security": [
+          {
+            "csrfContext": []
+          }
+        ],
+        "description": "Two-minute browser-session-bound single-use challenge; exact configured RP origins, user verification required. No username or credential list.",
+        "responses": {
+          "200": {
+            "description": "Ceremony UUID and browser library options JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "options"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "options": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid, expired, replayed or cryptographically rejected ceremony"
+          },
+          "401": {
+            "description": "Reauthentication failed or session ineligible"
+          },
+          "403": {
+            "description": "CSRF rejected"
+          },
+          "429": {
+            "description": "Bounded IP/flow throttle; Retry-After header"
+          },
+          "503": {
+            "description": "Feature disabled or sanitized store failure"
+          }
+        }
+      }
+    },
+    "/passkeys/login/finish": {
+      "post": {
+        "summary": "Verify assertion and create primary login session",
+        "security": [
+          {
+            "csrfContext": []
+          }
+        ],
+        "description": "CSRF header required. Library performs protocol/cryptographic verification; 64 KiB maximum body. Invalid responses consume the challenge. Rotates HTTP session ID; configured MFA remains required. Stored attested credentials are rechecked against fresh metadata, model tombstones and the accepted policy revision; metadata failure is 503.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "credential"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "credential": {
+                    "type": "object",
+                    "writeOnly": true,
+                    "description": "Native PublicKeyCredential.toJSON response; never logged"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Fresh primary session; redirect JSON to home or saved same-origin OAuth authorization"
+          },
+          "400": {
+            "description": "Invalid, expired, replayed or cryptographically rejected ceremony"
+          },
+          "401": {
+            "description": "Reauthentication failed or session ineligible"
+          },
+          "403": {
+            "description": "CSRF rejected"
+          },
+          "429": {
+            "description": "Bounded IP/flow throttle; Retry-After header"
+          },
+          "503": {
+            "description": "Feature disabled or sanitized store failure"
+          },
+          "413": {
+            "description": "Finish body exceeds 64 KiB"
+          }
+        }
+      }
+    },
+    "/passkeys/{id}/remove": {
+      "post": {
+        "summary": "Remove owned credential after reauthentication",
+        "security": [
+          {
+            "opSession": []
+          }
+        ],
+        "description": "Live session, configured MFA and current password required. Removal, grant/session revocation, logout enqueue and audit are atomic; ends current session. Tenant membership never authorizes another owner.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "password"
+                ],
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "writeOnly": true
+                  },
+                  "_csrf": {
+                    "type": "string",
+                    "writeOnly": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "302": {
+            "description": "Committed removal; redirect to login"
+          },
+          "400": {
+            "description": "Invalid, expired, replayed or cryptographically rejected ceremony"
+          },
+          "401": {
+            "description": "Reauthentication failed or session ineligible"
+          },
+          "403": {
+            "description": "CSRF rejected"
+          },
+          "429": {
+            "description": "Bounded IP/flow throttle; Retry-After header"
+          },
+          "503": {
+            "description": "Feature disabled or sanitized store failure"
+          },
+          "404": {
+            "description": "No owned credential"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/clients/{clientId}/authentication-keys": {
+      "parameters": [
+        {
+          "name": "clientId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Read public client assertion policy and revision",
+        "responses": {
+          "200": {
+            "description": "Revision and enabled state; GET also returns public JWKS as a JSON-encoded string"
+          },
+          "400": {
+            "description": "Invalid public-key profile or removal of sole authentication method"
+          },
+          "401": {
+            "description": "Bearer authentication required"
+          },
+          "403": {
+            "description": "Requires iam-admin audience and iam.admin scope"
+          },
+          "404": {
+            "description": "Client not found"
+          },
+          "409": {
+            "description": "Expected revision does not match; read and review current policy"
+          }
+        }
+      },
+      "put": {
+        "summary": "Replace public RS256 key set and enable private_key_jwt, preserving Basic",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "expectedRevision",
+                  "jwks"
+                ],
+                "properties": {
+                  "expectedRevision": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "jwks": {
+                    "type": "object",
+                    "required": [
+                      "keys"
+                    ],
+                    "properties": {
+                      "keys": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 3,
+                        "items": {
+                          "type": "object",
+                          "description": "Public RS256 RSA JWK, 2048..4096 bits, unique kid, use=sig; no private or remote parameters"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Revision and enabled state; GET also returns public JWKS as a JSON-encoded string"
+          },
+          "400": {
+            "description": "Invalid public-key profile or removal of sole authentication method"
+          },
+          "401": {
+            "description": "Bearer authentication required"
+          },
+          "403": {
+            "description": "Requires iam-admin audience and iam.admin scope"
+          },
+          "404": {
+            "description": "Client not found"
+          },
+          "409": {
+            "description": "Expected revision does not match; read and review current policy"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Disable assertions while preserving another client authentication method and revision tombstone",
+        "parameters": [
+          {
+            "name": "expectedRevision",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Revision and enabled state; GET also returns public JWKS as a JSON-encoded string"
+          },
+          "400": {
+            "description": "Invalid public-key profile or removal of sole authentication method"
+          },
+          "401": {
+            "description": "Bearer authentication required"
+          },
+          "403": {
+            "description": "Requires iam-admin audience and iam.admin scope"
+          },
+          "404": {
+            "description": "Client not found"
+          },
+          "409": {
+            "description": "Expected revision does not match; read and review current policy"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{id}/deactivate": {
+      "post": {
+        "summary": "Disable user and revoke sessions/grants",
+        "description": "Requires iam-admin audience and iam.admin scope. Transactional audit and durable RP logout. Logical deletion retains security evidence; invalid/repeated transitions return 409.",
+        "responses": {
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid or absent authentication"
+          },
+          "403": {
+            "description": "Insufficient permission"
+          },
+          "409": {
+            "description": "Constraint conflict"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/organizations/{id}/members": {
+      "get": {
+        "summary": "List organization memberships",
+        "description": "Requires iam-admin audience and iam.admin scope. Tenant membership alone never grants administration.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 21474836,
+              "default": 0
+            },
+            "description": "Zero-based page; at most 100 rows, stable identifier order."
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Administrator authorization required"
+          },
+          "404": {
+            "description": "Organization, user or membership not found"
+          },
+          "409": {
+            "description": "Duplicate membership or inactive user"
+          },
+          "200": {
+            "description": "Page of user_id and organization_id records"
+          }
+        }
+      },
+      "post": {
+        "summary": "Add active user to organization",
+        "description": "Requires iam-admin audience and iam.admin scope. Tenant membership alone never grants administration. Duplicate requests return 409. Writes and audit commit atomically.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "userId"
+                ],
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 36
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Administrator authorization required"
+          },
+          "404": {
+            "description": "Organization, user or membership not found"
+          },
+          "409": {
+            "description": "Duplicate membership or inactive user"
+          },
+          "201": {
+            "description": "Membership created"
+          }
+        }
+      }
+    },
+    "/api/v1/organizations/{id}/members/{userId}": {
+      "delete": {
+        "summary": "Remove membership and all its role assignments",
+        "description": "Requires iam-admin audience and iam.admin scope. Tenant membership alone never grants administration. Rejoining never restores removed assignments. Transactional audit; repeated removal returns 404. Subsequent primary-database PDP snapshots deny removed rights; no offline JWT revocation is implied.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Administrator authorization required"
+          },
+          "404": {
+            "description": "Organization, user or membership not found"
+          },
+          "409": {
+            "description": "Duplicate membership or inactive user"
+          },
+          "204": {
+            "description": "Membership and assignments removed"
+          }
+        }
+      }
+    }
+  }
+}

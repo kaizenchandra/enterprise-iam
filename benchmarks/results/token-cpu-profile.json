@@ -1,0 +1,28 @@
+{
+  "kind": "local-token-cpu-sample-summary",
+  "sampledHttpExecutorEvents": 1211,
+  "categories": {
+    "bcrypt-client-authentication": {
+      "samples": 1203,
+      "percent": 99.34
+    },
+    "other": {
+      "samples": 6,
+      "percent": 0.5
+    },
+    "signature-or-security-stack": {
+      "samples": 1,
+      "percent": 0.08
+    },
+    "postgresql-client-stack": {
+      "samples": 1,
+      "percent": 0.08
+    }
+  },
+  "limits": [
+    "CPU sampling during the measured HTTP workload only; not a wall-time decomposition",
+    "Small local run with sampling overhead; not a production bottleneck or SLO certification",
+    "Only aggregate stack categories exported; raw recording and event JSON removed",
+    "Environment/system-property/JVM-argument events disabled in the recording configuration"
+  ]
+}

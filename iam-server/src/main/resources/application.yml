@@ -1,0 +1,114 @@
+server:
+  port: 9000
+  shutdown: graceful
+  servlet:
+    session:
+      timeout: ${IAM_SESSION_IDLE_TIMEOUT:20m}
+      cookie:
+        name: IAM_SESSION
+        http-only: true
+        secure: true
+        same-site: lax
+spring:
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:2525}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      "[mail.debug]": false
+      "[mail.smtp.ssl.checkserveridentity]": true
+      "[mail.smtp.connectiontimeout]": 2000
+      "[mail.smtp.timeout]": 5000
+      "[mail.smtp.writetimeout]": 5000
+      "[mail.smtp.starttls.enable]": ${SMTP_STARTTLS:true}
+      "[mail.smtp.starttls.required]": ${SMTP_STARTTLS:true}
+  task:
+    scheduling:
+      pool:
+        size: 4
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/iam}
+    username: ${DB_USER:iam}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 20
+      connection-timeout: 2000
+      data-source-properties:
+        connectTimeout: 2
+        socketTimeout: 5
+        cancelSignalTimeout: 2
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      connect-timeout: 2s
+      timeout: 2s
+  session:
+    redis:
+      repository-type: indexed
+      flush-mode: immediate
+      namespace: iam:sessions
+  mvc:
+    problemdetails:
+      enabled: true
+management:
+  health:
+    mail:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+iam:
+  frontend:
+    auth-origin: ${AUTH_UI_ORIGIN:http://localhost:3000}
+  mfa:
+    required: ${MFA_REQUIRED:false}
+    removal-allowed: ${MFA_REMOVAL_ALLOWED:true}
+  passkey:
+    enabled: ${PASSKEYS_ENABLED:false}
+    rp-id: ${PASSKEY_RP_ID:localhost}
+    origins: ${PASSKEY_ORIGINS:https://localhost:9000}
+    allow-local-http: ${PASSKEY_ALLOW_LOCAL_HTTP:false}
+    attestation:
+      source: ${PASSKEY_METADATA_SOURCE:OFFLINE}
+      live-signer-name: ${PASSKEY_MDS_SIGNER_NAME:}
+      live-url: ${PASSKEY_MDS_URL:https://mds.fidoalliance.org/}
+      live-origins: ${PASSKEY_MDS_ORIGINS:https://mds.fidoalliance.org,https://crl.globalsign.com}
+      worker-timeout-seconds: ${PASSKEY_MDS_TIMEOUT_SECONDS:20}
+      mode: ${PASSKEY_ATTESTATION_MODE:NONE}
+      policy-revision: ${PASSKEY_ATTESTATION_POLICY_REVISION:1}
+      metadata-file: ${PASSKEY_METADATA_FILE:}
+      signing-roots-file: ${PASSKEY_METADATA_SIGNING_ROOTS_FILE:}
+      authenticator-roots-file: ${PASSKEY_AUTHENTICATOR_ROOTS_FILE:}
+      crls-file: ${PASSKEY_METADATA_CRLS_FILE:}
+      legal-header: ${PASSKEY_METADATA_LEGAL_HEADER:}
+      maximum-age: ${PASSKEY_METADATA_MAXIMUM_AGE:PT24H}
+  account:
+    registration-enabled: ${REGISTRATION_ENABLED:false}
+    console-origin: ${ACCOUNT_CONSOLE_ORIGIN:}
+    enabled: ${ACCOUNT_ACTIONS_ENABLED:false}
+    delivery-enabled: ${ACCOUNT_DELIVERY_ENABLED:true}
+    public-origin: ${ACCOUNT_PUBLIC_ORIGIN:https://localhost:9000}
+    allow-http: ${ACCOUNT_ALLOW_HTTP:false}
+    from: ${ACCOUNT_MAIL_FROM:identity@example.invalid}
+  session:
+    idle-timeout: ${IAM_SESSION_IDLE_TIMEOUT:PT20M}
+    absolute-timeout: ${IAM_SESSION_ABSOLUTE_TIMEOUT:PT8H}
+    expiry-enabled: ${IAM_SESSION_EXPIRY_ENABLED:true}
+    expiry-batch-size: ${IAM_SESSION_EXPIRY_BATCH_SIZE:100}
+    expiry-fixed-delay-ms: ${IAM_SESSION_EXPIRY_DELAY_MS:5000}
+    expiry-initial-delay-ms: ${IAM_SESSION_EXPIRY_INITIAL_DELAY_MS:5000}
+  retention:
+    enabled: ${IAM_RETENTION_ENABLED:true}
+    batch-size: ${IAM_RETENTION_BATCH_SIZE:100}
+    after-expiry: ${IAM_RETENTION_AFTER_EXPIRY:P1D}
+    fixed-delay-ms: ${IAM_RETENTION_FIXED_DELAY_MS:60000}
+    initial-delay-ms: ${IAM_RETENTION_INITIAL_DELAY_MS:60000}
+  refresh-family-lifetime: ${REFRESH_FAMILY_LIFETIME:PT8H}
+  issuer: ${IAM_ISSUER:https://localhost:9000}
+  signing-key-file: ${SIGNING_KEY_FILE}

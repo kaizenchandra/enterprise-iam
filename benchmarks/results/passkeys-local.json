@@ -1,0 +1,47 @@
+{
+  "kind": "local-closed-loop-virtual-authenticator-smoke",
+  "recordedAt": "2026-11-15T11:54:48.994Z",
+  "samples": 20,
+  "concurrency": 1,
+  "activeIdentities": 1,
+  "credentials": 1,
+  "opMaxHeapMiB": 256,
+  "failures": 0,
+  "profile": "platform",
+  "algorithm": "ES256",
+  "browser": "Chrome/157.0.8103.79",
+  "node": "v26.13.1",
+  "platform": "darwin",
+  "arch": "arm64",
+  "elapsedMs": 7896.248,
+  "achievedCeremoniesPerSecond": 2.533,
+  "latencyMs": {
+    "optionsMs": {
+      "p50": 23.775,
+      "p95": 57.679,
+      "p99": 180.616
+    },
+    "authenticatorMs": {
+      "p50": 49.123,
+      "p95": 57.965,
+      "p99": 61.309
+    },
+    "finishMs": {
+      "p50": 61.461,
+      "p95": 134.343,
+      "p99": 220.428
+    },
+    "totalMs": {
+      "p50": 143.488,
+      "p95": 335.342,
+      "p99": 336.071
+    }
+  },
+  "limitations": [
+    "20 samples, one active test identity and credential; p99 is the observed maximum, not a reliable tail estimate",
+    "localhost HTTP, one 256 MiB IAM JVM, local PostgreSQL/Redis and same-host Chrome/CDP",
+    "native user presence/verification simulated; no physical device, TLS/network, production load or CPU/GC/pool measurements",
+    "closed loop with navigation between samples; no offered-rate or saturation test",
+    "options/finish timing includes HTTP, CDP and test-client overhead; no isolated signing/verification CPU claim"
+  ]
+}

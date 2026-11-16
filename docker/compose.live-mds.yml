@@ -1,0 +1,24 @@
+# Opt-in live profile; review root custody, metadata terms, maximum age and egress before use.
+services:
+  iam:
+    environment:
+      PASSKEYS_ENABLED: "true"
+      PASSKEY_ATTESTATION_MODE: REQUIRED
+      PASSKEY_METADATA_SOURCE: LIVE
+      PASSKEY_ATTESTATION_POLICY_REVISION: ${PASSKEY_ATTESTATION_POLICY_REVISION:?Set a reviewed higher revision}
+      PASSKEY_METADATA_MAXIMUM_AGE: ${PASSKEY_METADATA_MAXIMUM_AGE:-P31D}
+      PASSKEY_METADATA_FILE: ${PASSKEY_METADATA_FILE:-}
+      PASSKEY_METADATA_SIGNING_ROOTS_FILE: /run/iam-attestation/metadata-roots.pem
+      PASSKEY_AUTHENTICATOR_ROOTS_FILE: /run/iam-attestation/authenticator-roots.pem
+      PASSKEY_METADATA_LEGAL_HEADER: ${PASSKEY_METADATA_LEGAL_HEADER:?Review and configure exact publisher legal header}
+      PASSKEY_MDS_SIGNER_NAME: ${PASSKEY_MDS_SIGNER_NAME:-mds.fidoalliance.org}
+      PASSKEY_MDS_URL: ${PASSKEY_MDS_URL:-https://mds.fidoalliance.org/}
+      PASSKEY_MDS_ORIGINS: ${PASSKEY_MDS_ORIGINS:-https://mds.fidoalliance.org,https://crl.globalsign.com}
+      PASSKEY_MDS_TIMEOUT_SECONDS: ${PASSKEY_MDS_TIMEOUT_SECONDS:-20}
+    volumes:
+      - type: bind
+        source: ${PASSKEY_ATTESTATION_DIRECTORY:?Set the existing reviewed trust directory}
+        target: /run/iam-attestation
+        read_only: true
+        bind:
+          create_host_path: false

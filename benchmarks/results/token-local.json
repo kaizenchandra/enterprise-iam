@@ -1,0 +1,34 @@
+{
+  "kind": "local-open-loop-client-credentials-smoke",
+  "recordedAt": "2026-11-15T11:40:00.048831+00:00",
+  "offeredRatePerSecond": 5,
+  "offeredRequests": 50,
+  "durationSeconds": 10,
+  "maxConcurrency": 8,
+  "attempted": 50,
+  "successful": 50,
+  "dropped": 0,
+  "errors": 0,
+  "statuses": {
+    "200": 50
+  },
+  "elapsedSeconds": 10.095,
+  "achievedSuccessesPerSecond": 4.953,
+  "latencyMs": {
+    "p50": 283.272,
+    "p95": 523.868,
+    "p99": 616.833
+  },
+  "maxClientSchedulingLagMs": 5.203,
+  "platform": "Darwin",
+  "arch": "arm64",
+  "hostLogicalCpus": 11,
+  "opMaxHeapMiB": 256,
+  "limits": [
+    "50 measured requests after 3 warmups; p99 is the observed maximum",
+    "Localhost HTTP, single test client identity, local PostgreSQL/Redis and same-host JVMs",
+    "Client secret validation, signing and database work included; CPU/GC/pool breakdown not instrumented",
+    "Not WebAuthn, MFA, human login, JWT resource validation or PDP throughput",
+    "Not representative production data, TLS/network, saturation, soak or multi-region capacity; no SLO claim"
+  ]
+}
